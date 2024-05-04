@@ -35,9 +35,9 @@ class MainWindow(QMainWindow):
         self.label2.setFont(QFont("Arial", 12))
         self.label2.setStyleSheet("color: #333;")
         self.comboBox2 = QComboBox()
-        self.comboBox2.addItem("mujeres")
-        self.comboBox2.addItem("hombres")
-        self.comboBox2.addItem("edad")
+        self.comboBox2.addItem("Canciones")
+        self.comboBox2.addItem("Suscripciones")
+        self.comboBox2.addItem("id")
         self.comboBox2.setFont(QFont("Arial", 12))
         layout.addWidget(self.label2)
         layout.addWidget(self.comboBox2)
@@ -78,42 +78,44 @@ class MainWindow(QMainWindow):
 
     def show_sorted(self):
 
-        select_method = self.comboBox1.currentText()
-        metodo_elegido = int(select_method.split(" - ")[0])
+        selected_methods = self.comboBox1.currentText()
+        chosen_method = int(selected_methods.split(" - ")[0])
 
-        colum = self.comboBox2.currentText()
-
-        route = "https://www.datos.gov.co/resource/dyy8-9s4r.json"
+        route = "https://retoolapi.dev/DvxmPF/Musicos_artistas"
 
         data = requests.get(route)
+        data.raise_for_status()
+
         data_json = data.json()
         data_df = pd.json_normalize(data_json)
 
-        metodo_nombre = select_method.split(" - ")[1]
-        metodo = Usuario.Usuario.get_method(metodo_elegido)
-        if metodo is not None:
+        method_name = selected_methods.split(" - ")[1]
+        method = Usuario.Usuario.get_method(chosen_method)
+        if method is not None:
             creator = Creator_metods.Creator()
 
-            ordering = data_df[colum].astype(int)
-            array_sorted = creator.ordenar(metodo_elegido, ordering, colum)[0]
+            column_to_sort = self.comboBox2.currentText()
 
-            data_df[colum] = array_sorted
-            data_df.sort_values(by=colum, inplace=True)
+            relevant_columns = ["id", "Canciones", "Suscripciones"]
+            for col in relevant_columns:
+                data_df[col] = pd.to_numeric(data_df[col], errors='coerce')
 
-            self.show_table(data_df,
-                            Message=f"Se mostró la información ordenada de la colum '{colum}' utilizando el "
-                                    f"método {metodo_nombre}.")
+            sorted_indices = data_df.sort_values(by=column_to_sort).index
+
+            data_df = data_df.loc[sorted_indices]
+
+            message = f"Se mostró la información ordenada de la columna {column_to_sort} utilizando el método {method_name}"
+            self.show_table(data_df, message)
 
     def show_unsorted(self):
-        colums = ["edad", "hombres", "mujeres"]
 
-        route = "https://www.datos.gov.co/resource/dyy8-9s4r.json"
+        route = "https://retoolapi.dev/DvxmPF/Musicos_artistas"
 
         data = requests.get(route)
         data_json = data.json()
         data_df = pd.json_normalize(data_json)
 
-        self.show_table(data_df[colums], Message="Se mostró la información sin ordenar de todas las columnas.")
+        self.show_table(data_df, Message="Se mostró la información sin ordenar de todas las columnas.")
 
     def show_table(self, df, Message):
 
