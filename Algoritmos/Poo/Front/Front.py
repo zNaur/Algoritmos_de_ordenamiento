@@ -128,3 +128,4 @@ class MainWindow(QMainWindow):
                 item = QTableWidgetItem(str(df.iloc[i, j]))
                 self.table.setItem(i, j, item)
         self.lineEdit3.setText(Message)
+
